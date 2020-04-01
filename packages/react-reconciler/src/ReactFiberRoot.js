@@ -65,8 +65,6 @@ type BaseFiberRootProperties = {|
   callbackPriority: ReactPriorityLevel,
   // The earliest pending expiration time that exists in the tree
   firstPendingTime: ExpirationTime,
-  // The latest pending expiration time that exists in the tree
-  lastPendingTime: ExpirationTime,
   // The earliest suspended expiration time that exists in the tree
   firstSuspendedTime: ExpirationTime,
   // The latest suspended expiration time that exists in the tree
@@ -124,7 +122,6 @@ function FiberRootNode(containerInfo, tag, hydrate) {
   this.callbackNode = null;
   this.callbackPriority = NoPriority;
   this.firstPendingTime = NoWork;
-  this.lastPendingTime = NoWork;
   this.firstSuspendedTime = NoWork;
   this.lastSuspendedTime = NoWork;
   this.nextKnownPendingLevel = NoWork;
@@ -208,10 +205,6 @@ export function markRootUpdatedAtTime(
   if (expirationTime > firstPendingTime) {
     root.firstPendingTime = expirationTime;
   }
-  const lastPendingTime = root.lastPendingTime;
-  if (lastPendingTime === NoWork || expirationTime < lastPendingTime) {
-    root.lastPendingTime = expirationTime;
-  }
 
   // Update the range of suspended times. Treat everything lower priority or
   // equal to this update as unsuspended.
@@ -239,11 +232,6 @@ export function markRootFinishedAtTime(
 ): void {
   // Update the range of pending times
   root.firstPendingTime = remainingExpirationTime;
-  if (remainingExpirationTime < root.lastPendingTime) {
-    // This usually means we've finished all the work, but it can also happen
-    // when something gets downprioritized during render, like a hidden tree.
-    root.lastPendingTime = remainingExpirationTime;
-  }
 
   // Update the range of suspended times. Treat everything higher priority or
   // equal to this update as unsuspended.

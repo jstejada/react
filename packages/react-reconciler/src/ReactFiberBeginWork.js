@@ -97,6 +97,8 @@ import {
 } from './ReactUpdateQueue';
 import {
   NoWork,
+  Idle,
+  ContinuousHydration,
   Never,
   Sync,
   computeAsyncExpiration,
@@ -1656,12 +1658,16 @@ function getRemainingWorkInPrimaryTree(
     // known level in the entire tree, since that will include everything.
     // TODO: If expirationTime were a bitmask where each bit represents a
     // separate task thread, this would be: currentChildBits & ~renderBits
-    const root = getWorkInProgressRoot();
-    if (root !== null) {
-      const lastPendingTime = root.lastPendingTime;
-      if (lastPendingTime < renderExpirationTime) {
-        return lastPendingTime;
-      }
+    if (renderExpirationTime > ContinuousHydration) {	
+      // First we try ContinuousHydration, so that we don't get grouped
+      // with Idle.
+      return ContinuousHydration;	
+    } else if (renderExpirationTime > Idle) {	
+      // Then we'll try Idle.	
+      return Idle;	
+    } else {	
+      // Already at lowest possible update level.	
+      return NoWork;	
     }
   }
   // In legacy mode, there's no work left.
